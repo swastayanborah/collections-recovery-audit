@@ -1,0 +1,8 @@
+code,suspect,evidence,finding
+A,Duplicate payments,FACT,500 duplicate rows (Rs 3.84 Cr); Rs 57.6 Cr of FAILED/PENDING/REVERSED rows sit in the same table
+B,Attribution errors,FACT,Last-touch credits 67% of payments to a channel; only 9% had a touch in the 7 days before paying
+C,Timezone problems,FACT,67% of calls are stored in UTC or Dubai time; converting to IST moves 67% of all calls to a different hour
+D,Disposition code changes,FACT,"3 code versions run side by side all year; PTP is logged as both PTP and PROMISE_TO_PAY, so counting one code halves PTPs"
+E,Agent identity,FACT,"30000 agent rows -> 1000 real agents; 1099 employee codes, 1099 of them shared across agents"
+F,Portfolio mix change,STRONG,Largest monthly swing in any segment share of collections: 3.9 pts -> no meaningful mix shift
+G,Denominator manipulation,STRONG,Rate on worked accounts only is 1.0x the rate on the full book

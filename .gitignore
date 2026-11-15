@@ -1,0 +1,5 @@
+collections_30k_dataset.zip
+__pycache__/
+.ipynb_checkpoints/
+output/*.duckdb
+reports/interview_prep.md

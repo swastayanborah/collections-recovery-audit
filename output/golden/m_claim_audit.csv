@@ -1,0 +1,4 @@
+step,label,value_pct,change_from_previous
+1,"Reported (raw SUCCESS rows, Feb -> Mar)",10.991610813832331,
+2,After removing duplicate payment rows,11.031885249801876,0.04027443596954505
+3,After adjusting for days in month (28 vs 31),0.2868640965952629,-10.745021153206613

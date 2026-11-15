@@ -1,0 +1,162 @@
+<title>The 11% Case File</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: verdict strip -> 4 KPI tiles -> waterfall (hero) + decision card -> trend + suspect list. One screen on desktop, stacks on phone. */
+:root {
+  --bg: #f5f6f8; --panel: #ffffff; --ink: #1b2330; --muted: #5d6878; --line: #dde1e7;
+  --accent: #1f5fd1; --reported: #9aa3b0; --bad: #c2412d; --good: #1f7a4d; --warn: #a86a00;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12161d; --panel: #1a2029; --ink: #e6e9ee; --muted: #9aa4b2; --line: #2b333f;
+  --accent: #6b9cff; --reported: #6b7480; --bad: #ef7b63; --good: #5cc58f; --warn: #e0a640; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12161d; --panel: #1a2029; --ink: #e6e9ee; --muted: #9aa4b2; --line: #2b333f;
+  --accent: #6b9cff; --reported: #6b7480; --bad: #ef7b63; --good: #5cc58f; --warn: #e0a640; color-scheme: dark }
+
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 14px; line-height: 1.45; }
+.wrap { max-width: 1280px; margin: 0 auto; padding-block: 20px 28px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 14px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 16px; min-width: 0; }
+h1 { font-size: 22px; font-weight: 600; margin: 0; text-wrap: balance; }
+h2 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.stamp { font-family: var(--mono); font-size: 10.5px; letter-spacing: .05em; padding: 2px 6px; border-radius: 3px;
+  border: 1px solid currentColor; white-space: nowrap; vertical-align: middle; }
+.FACT { color: var(--good); } .STRONG { color: var(--accent); } .CORRELATION { color: var(--warn); } .HYPOTHESIS { color: var(--muted); }
+
+.verdict { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; border-left: 4px solid var(--bad); }
+.verdict .sub { color: var(--muted); }
+.verdict strong { color: var(--bad); }
+
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.kpi .v { font-family: var(--mono); font-size: 26px; font-weight: 500; }
+.kpi .l { color: var(--muted); font-size: 12.5px; }
+
+.row { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 14px; }
+.chart { position: relative; height: 250px; }
+.decision ol { margin: 6px 0 10px; padding-left: 18px; display: grid; gap: 4px; }
+.decision .pick { font-size: 18px; font-weight: 600; color: var(--accent); }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+td, th { text-align: left; padding: 5px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 500; font-size: 12px; }
+.tablebox { overflow-x: auto; }
+.foot { color: var(--muted); font-size: 12px; }
+
+@media (max-width: 900px) { .row { grid-template-columns: 1fr; } .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style>
+
+<div class="wrap">
+  <section class="panel verdict">
+    <h1>Reported <span class="num">+11%</span>. Real change: <strong class="num" id="trueChg">+0.3%</strong>.</h1>
+    <span class="sub">Feb → Mar 2026. The jump is March having 31 days vs February's 28. Recovery per day has been flat since January.</span>
+    <span class="stamp FACT">FACT</span>
+  </section>
+
+  <section class="kpis">
+    <div class="panel kpi"><div class="v" id="kLakh">–</div><div class="l">Real recovery per day · trend <span class="num" id="kTrend"></span> / month</div></div>
+    <div class="panel kpi"><div class="v" id="kInfl">–</div><div class="l">Of the raw payments table is failed, pending, reversed or duplicate</div></div>
+    <div class="panel kpi"><div class="v" id="kKept">–</div><div class="l">PTP kept rate (true). Old formula shows <span class="num" id="kKeptN"></span></div></div>
+    <div class="panel kpi"><div class="v" id="kAttr">–</div><div class="l">Of payments had any contact in the 7 days before</div></div>
+  </section>
+
+  <section class="row">
+    <div class="panel">
+      <h2>Where the 11% comes from</h2>
+      <div class="chart"><canvas id="wf" aria-label="Waterfall from reported 11% to true 0.3%"></canvas></div>
+    </div>
+    <div class="panel decision">
+      <h2>₹10 Cr decision</h2>
+      <div class="pick">Better borrower targeting, in two stages</div>
+      <ol>
+        <li><b>₹0.8 Cr now:</b> production data pipeline + 10-week randomised test (90% new targeting / 10% holdout).</li>
+        <li><b>₹9.2 Cr only if</b> the test shows ≥3% recovery lift.</li>
+      </ol>
+      <table class="num">
+        <tr><th></th><th>Downside</th><th>Base</th><th>Upside</th></tr>
+        <tr><td>Lift</td><td>0%</td><td>2.5%</td><td>5%</td></tr>
+        <tr><td>Extra / yr</td><td>₹0</td><td>₹5.5 Cr</td><td>₹11 Cr</td></tr>
+        <tr><td>Break-even</td><td>₹0.8 Cr lost</td><td>22 mo</td><td>11 mo</td></tr>
+      </table>
+      <p class="foot">Payback in 12 months needs a <span class="num">4.6%</span> lift. Lift values are assumptions <span class="stamp HYPOTHESIS">HYPOTHESIS</span>. The test replaces them with a measurement.</p>
+    </div>
+  </section>
+
+  <section class="row">
+    <div class="panel">
+      <h2>Monthly: reported total vs real (per day × 30), ₹ Cr</h2>
+      <div class="chart"><canvas id="trend" aria-label="Reported monthly totals zig-zag, per-day recovery is flat"></canvas></div>
+    </div>
+    <div class="panel">
+      <h2>Data suspects checked</h2>
+      <div class="tablebox"><table id="sus"></table></div>
+    </div>
+  </section>
+  <p class="foot">Source: golden dataset built from raw tables (1 Jan – 8 Aug 2026; August excluded as incomplete). Rebuild with <span class="num">python run_pipeline.py</span>.</p>
+</div>
+
+<script src="data.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+(function () {
+  const D = window.DASH;
+  if (!D) return;
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const pct = (x, d = 1) => (x >= 0 ? '+' : '') + x.toFixed(d) + '%';
+
+  const a = D.audit;
+  document.getElementById('trueChg').textContent = pct(a[2].value_pct);
+  document.getElementById('kLakh').textContent = '₹' + D.kpi.lakh_per_day.toFixed(0) + ' L';
+  document.getElementById('kTrend').textContent = pct(D.kpi.trend_pct);
+  document.getElementById('kInfl').textContent = (100 * (1 - D.payments.golden_cr / D.payments.raw_cr)).toFixed(0) + '%';
+  document.getElementById('kKept').textContent = D.kpi.kept_true.toFixed(0) + '%';
+  document.getElementById('kKeptN').textContent = D.kpi.kept_naive.toFixed(0) + '%';
+  document.getElementById('kAttr').textContent = D.attr7.toFixed(0) + '%';
+
+  const tb = document.getElementById('sus');
+  tb.innerHTML = '<tr><th></th><th>Suspect</th><th>Finding</th></tr>' + D.suspects.map(s =>
+    `<tr><td><span class="stamp ${s.evidence}">${s.evidence}</span></td><td>${s.code}. ${s.suspect}</td><td>${s.finding.replace(/Rs /g, '₹')}</td></tr>`).join('');
+
+  if (!window.Chart) return;
+  Chart.defaults.font.family = css('--sans');
+  Chart.defaults.color = css('--muted');
+  Chart.defaults.borderColor = css('--line');
+
+  const r = a[0].value_pct, d1 = a[1].value_pct, t = a[2].value_pct;
+  new Chart(document.getElementById('wf'), {
+    type: 'bar',
+    data: {
+      labels: ['Reported (raw rows)', 'Remove duplicates', 'Adjust 28 vs 31 days', 'Real change'],
+      datasets: [{
+        data: [[0, r], [r, d1], [t, d1], [0, t]],
+        backgroundColor: [css('--reported'), css('--bad'), css('--bad'), css('--accent')],
+        borderRadius: 2, minBarLength: 3
+      }]
+    },
+    options: {
+      maintainAspectRatio: false, plugins: { legend: { display: false },
+        tooltip: { callbacks: { label: c => { const [lo, hi] = c.raw; return c.dataIndex === 0 || c.dataIndex === 3 ? hi.toFixed(2) + '%' : (c.dataIndex === 2 ? '−' : '+') + Math.abs(hi - lo).toFixed(2) + ' pts'; } } } },
+      scales: { y: { min: 0, max: 12, ticks: { callback: v => v + '%' } }, x: { grid: { display: false } } }
+    },
+    plugins: [{ id: 'labels', afterDatasetsDraw(ch) {
+      const ctx = ch.ctx, meta = ch.getDatasetMeta(0);
+      const txt = [r.toFixed(1) + '%', '+' + (d1 - r).toFixed(2), '−' + (d1 - t).toFixed(1) + ' pts', pct(t)];
+      ctx.save(); ctx.fillStyle = css('--ink'); ctx.font = '500 12px ' + css('--mono'); ctx.textAlign = 'center';
+      meta.data.forEach((b, i) => ctx.fillText(txt[i], b.x, Math.min(b.y, b.base) - 6)); ctx.restore();
+    } }]
+  });
+
+  new Chart(document.getElementById('trend'), {
+    type: 'line',
+    data: { labels: D.monthly.map(m => m.m), datasets: [
+      { label: 'Reported monthly total', data: D.monthly.map(m => m.reported_cr), borderColor: css('--reported'), backgroundColor: css('--reported'), tension: 0 },
+      { label: 'Real, per day × 30', data: D.monthly.map(m => m.true_cr_30d), borderColor: css('--accent'), backgroundColor: css('--accent'), borderWidth: 3, tension: 0 }
+    ] },
+    options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } },
+      scales: { y: { min: 16, max: 20, ticks: { callback: v => '₹' + v } }, x: { grid: { display: false } } } }
+  });
+})();
+</script>

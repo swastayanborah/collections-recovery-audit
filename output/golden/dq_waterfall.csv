@@ -1,0 +1,6 @@
+tbl,raw_rows,rejected_duplicates,excluded_not_success,golden_rows,raw_amount,golden_amount
+payments,25500,500,7466,17534,1917258617.149993,1315583964.6399958
+calls,91350,1350,0,90000,,
+whatsapp_events,60600,600,0,60000,,
+borrowers,30600,19585,0,11015,,
+agents,30000,29000,0,1000,,
